@@ -95,63 +95,35 @@
 
   function populateVoices(){
     voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-
+  
     const brVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
-    const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-    const usable = brVoices.length ? brVoices : ptVoices;
-
+    const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt') && !v.lang.toLowerCase().startsWith('pt-br'));
+    const usable = [...brVoices, ...ptVoices];
+  
     els.voiceSelect.innerHTML = '';
-
+  
     if (!usable.length){
-      els.voiceStatus.textContent = 'Nenhuma voz portuguesa encontrada. Verifique seu navegador.';
+      els.voiceStatus.textContent = 'Nenhuma voz pt‑BR/pt encontrada. Verifique seu navegador.';
       return;
     }
-
+  
     usable.forEach((v, i) => {
       const opt = document.createElement('option');
       opt.value = String(i);
       opt.textContent = `${v.name} (${v.lang})`;
       els.voiceSelect.appendChild(opt);
     });
-
-    // Preferência: Microsoft ThalitaMultilingual Online (Natural) - Portuguese (Brazil) (pt-BR)
-    const normalize = (s) => String(s || '').toLowerCase().trim();
-    let defaultIndex = 0;
-
-    const desiredExact = 'microsoft thalitamultilingual online (natural) - portuguese (brazil)';
-    const exactIdx = usable.findIndex(v => normalize(v.name) === desiredExact && normalize(v.lang) === 'pt-br');
-
-    if (exactIdx >= 0) {
-      defaultIndex = exactIdx;
-    } else {
-      const candidateIdx = usable.findIndex(v => {
-        const n = normalize(v.name);
-        const isBR = normalize(v.lang) === 'pt-br';
-        return isBR && n.includes('microsoft') && n.includes('thalita') && n.includes('natural') && (n.includes('portuguese (brazil)') || n.includes('português (brasil)'));
-      });
-      if (candidateIdx >= 0) {
-        defaultIndex = candidateIdx;
-      } else {
-        const preferredNames = ['Microsoft Maria', 'Google português do Brasil', 'Maria'];
-        const foundIdx = usable.findIndex(v => {
-          const n = normalize(v.name);
-          return preferredNames.some(p => n.includes(normalize(p)));
-        });
-        if (foundIdx >= 0) defaultIndex = foundIdx;
-      }
-    }
-
-    // Manter seleção anterior se possível
-    let setIndex = defaultIndex;
+  
+    let setIndex = 0;
     if (selectedVoice) {
       const found = usable.findIndex(v => v.name === selectedVoice.name && v.lang === selectedVoice.lang);
       if (found >= 0) setIndex = found;
     }
-
+  
     els.voiceSelect.value = String(setIndex);
     selectedVoice = usable[setIndex];
-
-    els.voiceStatus.textContent = `Vozes carregadas: ${usable.length} disponíveis • Selecionada: ${selectedVoice.name} (${selectedVoice.lang})`;
+  
+    els.voiceStatus.textContent = `Vozes (pt/pt‑BR): ${usable.length} • Selecionada: ${selectedVoice.name} (${selectedVoice.lang})`;
   }
 
   function speak(text, sourceEl){
@@ -174,9 +146,12 @@
     try {
       const idx = parseInt(els.voiceSelect.value, 10);
       const brVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
-      const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-      const usable = brVoices.length ? brVoices : ptVoices;
+      const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt') && !v.lang.toLowerCase().startsWith('pt-br'));
+      const usable = [...brVoices, ...ptVoices];
       utter.voice = selectedVoice || usable[idx] || null;
+      if (utter.voice && utter.voice.lang) {
+        utter.lang = utter.voice.lang;
+      }
     } catch {}
 
     utter.onstart = () => { try { sourceEl && sourceEl.classList.add('speaking'); } catch {} };
@@ -207,10 +182,10 @@
       window.speechSynthesis.onvoiceschanged = () => populateVoices();
       els.voiceSelect.addEventListener('change', () => {
         try {
-          const brVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
-          const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
-          const usable = brVoices.length ? brVoices : ptVoices;
           const idx = parseInt(els.voiceSelect.value, 10);
+          const brVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
+          const ptVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('pt') && !v.lang.toLowerCase().startsWith('pt-br'));
+          const usable = [...brVoices, ...ptVoices];
           selectedVoice = usable[idx] || null;
           if (selectedVoice) {
             els.voiceStatus.textContent = `Voz selecionada: ${selectedVoice.name} (${selectedVoice.lang})`;
