@@ -1,0 +1,82 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+:root {
+  --bg: #f6f7fb; --card-bg: #ffffff; --text: #1b1b1b; --muted: #6b7280; --border: #e5e7eb;
+  --primary: #2563eb; --primary-dark: #1e40af; --secondary: #10b981; --secondary-dark: #047857;
+  --tertiary: #f59e0b; --tertiary-dark: #b45309; --danger: #ef4444; --danger-dark: #991b1b;
+}
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 10% 0%, #eef2ff 0%, var(--bg) 50%);
+}
+
+.app-header {
+  background: white;
+  color: var(--text);
+  padding: 32px 16px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: inline-flex; align-items: center; gap: 12px; justify-content: center; }
+.brand-logo { 
+  height: 64px; 
+  width: 64px; 
+  object-fit: contain; 
+}
+.app-header h1 { margin: 0; font-size: 32px; letter-spacing: 0.3px; color: var(--text); }
+.app-header p { margin: 6px 0 0; opacity: 0.7; color: var(--muted); }
+
+.app-main { max-width: 980px; margin: 24px auto; padding: 0 16px; }
+
+section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 18px; box-shadow: 0 10px 18px rgba(0,0,0,0.06); }
+section h2 { margin: 0 0 12px; font-size: 20px; }
+
+.status { margin-top: 8px; font-size: 14px; color: #374151; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; align-items: start; }
+.control { background: #f9fafb; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.control label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.control label span { display:inline-block; min-width:42px; text-align:center; background:#eef2ff; color: var(--primary-dark); padding:2px 8px; border-radius:8px; font-weight:700; }
+.control select { width: 100%; height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; background: #ffffff; }
+.control input[type="range"] { width: 100%; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; height: 44px; padding: 0 16px;
+  border-radius: 12px; border: 1px solid transparent;
+  cursor: pointer; font-weight: 600;
+  transition: transform .12s ease, box-shadow .2s ease, background-color .2s ease;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--secondary); color: white; }
+.btn-secondary:hover { background: var(--secondary-dark); }
+.btn-tertiary { background: var(--tertiary); color: #1b1b1b; }
+.btn-tertiary:hover { background: var(--tertiary-dark); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: var(--danger-dark); }
+.btn-ico { display:inline-flex; align-items:center; justify-content:center; width: 20px; }
+.btn-ico svg { width: 18px; height: 18px; }
+.btn .btn-ico { margin-right: 2px; }
+
+.phrases-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.phrase-card { border: 1px solid var(--border); border-radius: 14px; padding: 14px; background: #fafafa; display: grid; gap: 10px; transition: transform .12s ease, box-shadow .2s ease; }
+.phrase-card:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(0,0,0,0.06); }
+.phrase-text { font-size: 16px; line-height: 1.35; }
+.card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.add-phrase-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.add-phrase-grid textarea { width: 100%; border-radius: 12px; border: 1px solid var(--border); padding: 12px; font-size: 16px; background: #f9fafb; }
+.add-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,.55);} 70% { box-shadow: 0 0 0 10px rgba(37,99,235,0);} 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0);} }
+.btn.speaking { animation: pulse 1.2s ease-out infinite; }
+
+.app-footer { text-align: center; color: var(--muted); font-size: 13px; margin: 24px 0; }
