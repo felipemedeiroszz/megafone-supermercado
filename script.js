@@ -1,7 +1,7 @@
 (function(){
   const STORAGE_KEY = 'megafone_frases';
   const defaultPhrases = [
-    '{nome} comparecer depósito.',
+    '{nome} comparecer no depósito.',
     '{nome} frente de caixa.',
     'caixa {nome} liberado .',
     'Auxiliar de limpeza, frente de caixa.',
