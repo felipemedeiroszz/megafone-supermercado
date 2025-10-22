@@ -1,12 +1,11 @@
 (function(){
   const STORAGE_KEY = 'megafone_frases';
   const defaultPhrases = [
+    '{nome} comparecer depósito.',
+    '{nome} frente de caixa.',
+    'caixa {nome} liberado .',
     'Auxiliar de limpeza, frente de caixa.',
-    'Atenção clientes: o mercado fechará em 10 minutos.',
-    'Promoção relâmpago na seção de hortifruti!',
     'Gerente de loja, favor dirigir-se ao caixa.',
-    'Equipe de reposição, por favor, setor de bebidas.',
-    'Atenção: operação de frente de caixa iniciando agora.',
   ];
 
   // Ícones SVG consistentes
@@ -56,6 +55,14 @@
   function savePhrases(list){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
+
+  // Reset inicial: garante apenas as frases pedidas quando não houver storage
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      savePhrases([...defaultPhrases]);
+    }
+  } catch {}
 
   function resolveText(text, name){
     const nome = String(name || '').trim();
@@ -122,7 +129,8 @@
       speakBtn.innerHTML = icon('volume') + ' Falar';
       speakBtn.addEventListener('click', () => {
         const finalText = hasToken ? resolveText(text, primaryNameInput ? primaryNameInput.value : '') : text;
-        speak(finalText, speakBtn);
+        speak(finalText, speakBtn, true);
+        setTimeout(() => speak(finalText, speakBtn, false), 3000);
       });
 
       const editBtn = document.createElement('button');
@@ -224,7 +232,7 @@
     els.voiceStatus.textContent = `Vozes (pt/pt‑BR): ${usable.length} • Selecionada: ${selectedVoice.name} (${selectedVoice.lang})`;
   }
 
-  function speak(text, sourceEl){
+  function speak(text, sourceEl, cancelPrevious = true){
     if (!('speechSynthesis' in window)){
       alert('Seu navegador não suporta síntese de voz. Tente o Chrome ou Edge.');
       return;
@@ -232,7 +240,9 @@
     const trimmed = String(text || '').trim();
     if (!trimmed){ return; }
 
-    window.speechSynthesis.cancel();
+    if (cancelPrevious) {
+      window.speechSynthesis.cancel();
+    }
     const utter = new SpeechSynthesisUtterance(trimmed);
 
     utter.lang = 'pt-BR';
