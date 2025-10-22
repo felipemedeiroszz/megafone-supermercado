@@ -18,6 +18,7 @@
       case 'volume': return wrap('<polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5"></polygon>');
       case 'bookmark': return wrap('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>');
       case 'trash': return wrap('<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 13a2 2 0 0 1 -2 2H8a2 2 0 0 1 -2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path>');
+      case 'edit': return wrap('<path d="M12 20h9"></path><path d="M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z"></path>');
       default: return wrap('<circle cx="12" cy="12" r="6"></circle>');
     }
   }
@@ -37,6 +38,7 @@
     newPhrase: document.getElementById('newPhrase'),
     addPhraseBtn: document.getElementById('addPhraseBtn'),
     speakNowBtn: document.getElementById('speakNowBtn'),
+    insertNameTokenBtn: document.getElementById('insertNameTokenBtn'),
   };
 
   let voices = [];
@@ -53,6 +55,26 @@
   }
   function savePhrases(list){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  function resolveText(text, name){
+    const nome = String(name || '').trim();
+    const t = String(text || '');
+    // Suporta {NOME} e {nome}
+    return t.replace(/\{NOME\}/g, nome || '').replace(/\{nome\}/g, nome || '');
+  }
+
+  function insertAtCursor(textarea, token){
+    const el = textarea;
+    const val = String(el.value || '');
+    const start = el.selectionStart ?? val.length;
+    const end = el.selectionEnd ?? val.length;
+    const needsSpace = start > 0 && !(/\s/.test(val[start-1] || ''));
+    const insert = (needsSpace ? ' ' : '') + token;
+    el.value = val.slice(0, start) + insert + val.slice(end);
+    const newPos = start + insert.length;
+    try { el.setSelectionRange(newPos, newPos); } catch {}
+    el.focus();
   }
 
   function renderPhrases(){
@@ -74,6 +96,52 @@
       speakBtn.innerHTML = icon('volume') + ' Falar';
       speakBtn.addEventListener('click', () => speak(text, speakBtn));
 
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-tertiary';
+      editBtn.innerHTML = icon('edit') + ' Editar';
+      editBtn.addEventListener('click', () => {
+        const input = document.createElement('textarea');
+        input.className = 'edit-input';
+        input.rows = 3;
+        input.value = text;
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-secondary';
+        saveBtn.innerHTML = icon('bookmark') + ' Salvar';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-danger';
+        cancelBtn.innerHTML = icon('stop') + ' Cancelar';
+
+        // Substitui conteúdo do cartão por modo edição
+        card.innerHTML = '';
+        const editWrap = document.createElement('div');
+        editWrap.className = 'edit-wrap';
+        editWrap.appendChild(input);
+
+        const editActions = document.createElement('div');
+        editActions.className = 'card-actions';
+        editActions.appendChild(saveBtn);
+        editActions.appendChild(cancelBtn);
+
+        card.appendChild(editWrap);
+        card.appendChild(editActions);
+
+        input.focus();
+        try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+
+        const doSave = () => {
+          const newText = (input.value || '').trim();
+          if (!newText) return;
+          const updated = loadPhrases();
+          updated[idx] = newText;
+          savePhrases(updated);
+          renderPhrases();
+        };
+        saveBtn.addEventListener('click', doSave);
+        cancelBtn.addEventListener('click', () => renderPhrases());
+      });
+
       const removeBtn = document.createElement('button');
       removeBtn.className = 'btn btn-danger';
       removeBtn.innerHTML = icon('trash') + ' Remover';
@@ -85,6 +153,7 @@
       });
 
       actions.appendChild(speakBtn);
+      actions.appendChild(editBtn);
       actions.appendChild(removeBtn);
 
       card.appendChild(p);
@@ -204,6 +273,9 @@
     els.stopBtn.innerHTML = icon('stop') + ' Parar fala';
     els.speakNowBtn.innerHTML = icon('play') + ' Falar agora';
     els.addPhraseBtn.innerHTML = icon('bookmark') + ' Salvar como botão';
+    if (els.insertNameTokenBtn) {
+      els.insertNameTokenBtn.innerHTML = icon('edit') + ' Inserir {nome}';
+    }
 
     els.testVoiceBtn.addEventListener('click', () => speak('Teste de voz. Esta é uma voz brasileira feminina.', els.testVoiceBtn));
     els.stopBtn.addEventListener('click', () => {
@@ -212,9 +284,12 @@
     });
 
     els.speakNowBtn.addEventListener('click', () => speak(els.newPhrase.value, els.speakNowBtn));
+    if (els.insertNameTokenBtn) {
+      els.insertNameTokenBtn.addEventListener('click', () => insertAtCursor(els.newPhrase, '{nome}'));
+    }
     els.addPhraseBtn.addEventListener('click', () => {
       const text = (els.newPhrase.value || '').trim();
-      if (text.length < 3) return;
+      if (text.length < 1) return;
       const list = loadPhrases();
       list.unshift(text);
       savePhrases(list);
