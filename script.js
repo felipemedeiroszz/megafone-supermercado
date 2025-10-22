@@ -84,9 +84,35 @@
       const card = document.createElement('div');
       card.className = 'phrase-card';
 
+      const hasToken = /\{(NOME|nome)\}/.test(String(text || ''));
+
       const p = document.createElement('div');
       p.className = 'phrase-text';
-      p.textContent = text;
+
+      let primaryNameInput = null;
+      if (hasToken){
+        const frag = document.createDocumentFragment();
+        const re = /\{(NOME|nome)\}/g;
+        let lastIndex = 0;
+        let match;
+        while ((match = re.exec(text))){
+          const before = text.slice(lastIndex, match.index);
+          if (before) frag.appendChild(document.createTextNode(before));
+          const inp = document.createElement('input');
+          inp.type = 'text';
+          inp.className = 'name-inline';
+          inp.placeholder = 'Nome…';
+          inp.setAttribute('aria-label', 'Nome para a frase');
+          frag.appendChild(inp);
+          if (!primaryNameInput) primaryNameInput = inp;
+          lastIndex = match.index + match[0].length;
+        }
+        const after = text.slice(lastIndex);
+        if (after) frag.appendChild(document.createTextNode(after));
+        p.appendChild(frag);
+      } else {
+        p.textContent = text;
+      }
 
       const actions = document.createElement('div');
       actions.className = 'card-actions';
@@ -94,7 +120,10 @@
       const speakBtn = document.createElement('button');
       speakBtn.className = 'btn btn-primary';
       speakBtn.innerHTML = icon('volume') + ' Falar';
-      speakBtn.addEventListener('click', () => speak(text, speakBtn));
+      speakBtn.addEventListener('click', () => {
+        const finalText = hasToken ? resolveText(text, primaryNameInput ? primaryNameInput.value : '') : text;
+        speak(finalText, speakBtn);
+      });
 
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-tertiary';
@@ -299,13 +328,27 @@
 
     // Atalhos: números 1-9 falam as primeiras frases
     document.addEventListener('keydown', (e) => {
-      if (e.target instanceof HTMLTextAreaElement) return; // não atrapalhar digitação
+      // Evita interferir quando digitando em inputs/textarea
+      if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
+
       const n = parseInt(e.key, 10);
-      if (!isNaN(n) && n >= 1 && n <= 9){
-        const list = loadPhrases();
-        const phrase = list[n-1];
-        if (phrase) speak(phrase);
+      if (!Number.isInteger(n) || n < 1 || n > 9) return;
+
+      const list = loadPhrases();
+      const phrase = list[n-1];
+      if (!phrase) return;
+
+      e.preventDefault();
+
+      let finalText = phrase;
+      if (/\{(NOME|nome)\}/.test(phrase)){
+        const cards = els.phrasesContainer.querySelectorAll('.phrase-card');
+        const card = cards[n-1];
+        const inp = card ? card.querySelector('.name-inline') : null;
+        const nameVal = inp ? inp.value : '';
+        finalText = resolveText(phrase, nameVal);
       }
+      speak(finalText);
     });
   }
 
